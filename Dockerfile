@@ -13,15 +13,20 @@ ARG https_proxy
 ENV http_proxy=http://10.175.24.10:8123
 ENV https_proxy=http://10.175.24.10:8123
 
+# Alpine 패키지 설치 (프록시 환경)
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # package.json과 package-lock.json 복사
 COPY package*.json ./
 
+# npm 프록시 설정
+RUN npm config set proxy http://10.175.24.10:8123 && \
+    npm config set https-proxy http://10.175.24.10:8123 && \
+    npm config set registry https://registry.npmjs.org/
+
 # 의존성 설치 (내부망 환경 최적화)
 RUN npm cache clean --force && \
-    npm install --only=production --no-optional --registry=https://registry.npmjs.org/ || \
     npm install --only=production --no-optional
 
 # 2단계: 빌드
@@ -37,6 +42,11 @@ WORKDIR /app
 # 의존성 복사
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# npm 프록시 설정 (빌드 스테이지)
+RUN npm config set proxy http://10.175.24.10:8123 && \
+    npm config set https-proxy http://10.175.24.10:8123 && \
+    npm config set registry https://registry.npmjs.org/
 
 # 개발 의존성 설치 (빌드에 필요한 패키지들)
 RUN npm install --only=development --no-optional || true
