@@ -1,0 +1,47 @@
+# 의존성
+node_modules
+npm-debug.log*
+
+# Next.js 빌드 결과물
+.next
+out
+
+# 환경 파일
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 로그 파일
+logs
+*.log
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# 개발 관련 파일
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+
+# IDE 설정
+.vscode
+.idea
+*.swp
+*.swo
+
+# 운영체제 관련
+.DS_Store
+Thumbs.db
+
+# 테스트 관련
+coverage
+.coverage
+*.lcov
+
+# 기타
+*.tgz
+*.tar.gz 

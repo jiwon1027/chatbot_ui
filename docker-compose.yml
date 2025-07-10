@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  chatbot-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://34.71.147.202:3000}
+      - NEXT_PUBLIC_API_ENDPOINT=${NEXT_PUBLIC_API_ENDPOINT:-/api/v1/chat/ollama}
+      - NEXT_PUBLIC_MODEL_NAME=${NEXT_PUBLIC_MODEL_NAME:-gemma3:1b}
+      - NEXT_PUBLIC_TYPING_SPEED=${NEXT_PUBLIC_TYPING_SPEED:-50}
+      - NEXT_PUBLIC_LOG_LEVEL=${NEXT_PUBLIC_LOG_LEVEL:-ERROR}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - chatbot-network
+
+networks:
+  chatbot-network:
+    driver: bridge 
