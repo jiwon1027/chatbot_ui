@@ -10,17 +10,11 @@ services:
       - NEXT_PUBLIC_API_ENDPOINT=${NEXT_PUBLIC_API_ENDPOINT:-/api/v1/chat/completions}
       - NEXT_PUBLIC_MODEL_NAME=${NEXT_PUBLIC_MODEL_NAME:-gemma3:1b}
       - NEXT_PUBLIC_TYPING_SPEED=${NEXT_PUBLIC_TYPING_SPEED:-50}
-      - NEXT_PUBLIC_LOG_LEVEL=${NEXT_PUBLIC_LOG_LEVEL:-ERROR}
+      - NEXT_PUBLIC_LOG_LEVEL=${NEXT_PUBLIC_LOG_LEVEL:-DEBUG}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
-    networks:
-      - chatbot-network
-
-networks:
-  chatbot-network:
-    driver: bridge 
+      start_period: 40s 

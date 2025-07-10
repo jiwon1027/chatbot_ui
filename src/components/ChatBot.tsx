@@ -136,12 +136,41 @@ const ChatBot = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [initError, setInitError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // 환경 변수 안전성 검사
+  const validateEnvironment = () => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+      const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT;
+      
+      if (!baseUrl || !endpoint) {
+        throw new Error(`환경 변수 누락: baseUrl=${baseUrl}, endpoint=${endpoint}`);
+      }
+      
+      logger.info('환경 변수 검증 완료', { baseUrl, endpoint });
+      return true;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 환경 변수 오류';
+      errorLogger.error('환경 변수 검증 실패', { error: errorMessage });
+      setInitError(errorMessage);
+      return false;
+    }
+  };
+
   // 컴포넌트 마운트 로깅
   useEffect(() => {
-    logger.info('ChatBot 컴포넌트가 마운트되었습니다');
+    try {
+      logger.info('ChatBot 컴포넌트가 마운트되었습니다');
+      validateEnvironment();
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '초기화 오류';
+      errorLogger.error('ChatBot 초기화 실패', { error: errorMessage });
+      setInitError(errorMessage);
+    }
+    
     return () => {
       logger.info('ChatBot 컴포넌트가 언마운트되었습니다');
       // 타이핑 효과 정리
@@ -151,6 +180,47 @@ const ChatBot = () => {
       }
     };
   }, []);
+
+  // 초기화 오류가 있는 경우 에러 화면 표시
+  if (initError) {
+    return (
+      <div style={{
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        width: '320px',
+        backgroundColor: '#fff',
+        border: '2px solid #dc3545',
+        borderRadius: '12px',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
+        zIndex: 1000,
+        padding: '20px'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <h3 style={{ color: '#dc3545', margin: '0 0 10px 0', fontSize: '16px' }}>
+            챗봇 초기화 오류
+          </h3>
+          <p style={{ color: '#6c757d', fontSize: '14px', margin: '0 0 15px 0' }}>
+            {initError}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              fontSize: '14px',
+              cursor: 'pointer'
+            }}
+          >
+            새로고침
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // 메시지 변경 로깅
   useEffect(() => {
