@@ -150,7 +150,7 @@ src/
 curl http://localhost:3003/api/health
 
 # 로그 모니터링
-docker-compose -f docker-compose.offline.yml logs -f
+docker compose -f docker-compose.offline.yml logs -f
 
 # 리소스 모니터링
 docker stats

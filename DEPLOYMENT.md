@@ -140,7 +140,7 @@ cp .env.example .env
 nano .env
 
 # 4. 컨테이너 실행
-docker-compose -f docker-compose.offline.yml up -d
+docker compose -f docker-compose.offline.yml up -d
 ```
 
 ## ⚙️ 환경 설정
@@ -182,16 +182,16 @@ curl http://localhost:3003/api/health
 http://localhost:3003
 
 # 컨테이너 상태 확인
-docker-compose -f docker-compose.offline.yml ps
+docker compose -f docker-compose.offline.yml ps
 ```
 
 ### 로그 모니터링
 ```bash
 # 실시간 로그 확인
-docker-compose -f docker-compose.offline.yml logs -f
+docker compose -f docker-compose.offline.yml logs -f
 
 # 특정 시간 로그 확인
-docker-compose -f docker-compose.offline.yml logs --since="2024-01-01T00:00:00Z"
+docker compose -f docker-compose.offline.yml logs --since="2024-01-01T00:00:00Z"
 ```
 
 ### 리소스 모니터링
@@ -209,13 +209,13 @@ free -h
 ### 서비스 관리
 ```bash
 # 서비스 중지
-docker-compose -f docker-compose.offline.yml down
+docker compose -f docker-compose.offline.yml down
 
 # 서비스 재시작
-docker-compose -f docker-compose.offline.yml restart
+docker compose -f docker-compose.offline.yml restart
 
 # 서비스 시작
-docker-compose -f docker-compose.offline.yml up -d
+docker compose -f docker-compose.offline.yml up -d
 ```
 
 ## 🔧 문제해결
@@ -236,7 +236,7 @@ docker load -i offline-images/chatbot-ui-1.0.0.tar
 **2. 컨테이너 실행 실패**
 ```bash
 # 로그 확인
-docker-compose -f docker-compose.offline.yml logs
+docker compose -f docker-compose.offline.yml logs
 
 # 포트 충돌 확인
 netstat -tlnp | grep :3003
@@ -245,10 +245,10 @@ netstat -tlnp | grep :3003
 **3. API 연결 실패**
 ```bash
 # 환경 변수 확인
-docker-compose -f docker-compose.offline.yml exec chatbot-ui env | grep NEXT_PUBLIC
+docker compose -f docker-compose.offline.yml exec chatbot-ui env | grep NEXT_PUBLIC
 
 # 네트워크 연결 확인
-docker-compose -f docker-compose.offline.yml exec chatbot-ui ping 172.20.23.104
+docker compose -f docker-compose.offline.yml exec chatbot-ui ping 172.20.23.104
 ```
 
 **4. 플랫폼 호환성 에러**
@@ -269,13 +269,13 @@ uname -m
 ### 디버깅 명령어
 ```bash
 # 컨테이너 내부 접속
-docker-compose -f docker-compose.offline.yml exec chatbot-ui sh
+docker compose -f docker-compose.offline.yml exec chatbot-ui sh
 
 # 이미지 확인
 docker images | grep chatbot-ui
 
 # 컨테이너 상세 정보
-docker inspect chatbot-ui_chatbot-ui_1
+docker inspect chatbot-ui-chatbot-ui-1
 ```
 
 ## 🔄 업데이트 절차
@@ -292,7 +292,7 @@ git pull
 ### 2. 폐쇄망 업데이트
 ```bash
 # 기존 서비스 중지
-docker-compose -f docker-compose.offline.yml down
+docker compose -f docker-compose.offline.yml down
 
 # 새 이미지 파일 전송 및 로드
 # (위의 배포 절차와 동일)

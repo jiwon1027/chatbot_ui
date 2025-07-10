@@ -11,6 +11,22 @@ OFFLINE_DIR="./offline-images"
 VERSION="1.0.0"  # package.json에서 가져온 버전과 동일하게 설정
 TAR_FILE="${OFFLINE_DIR}/chatbot-ui-${VERSION}.tar.gz"
 
+# 플랫폼 자동 감지
+ARCH=$(uname -m)
+case $ARCH in
+    x86_64)
+        PLATFORM="linux/amd64"
+        ;;
+    aarch64|arm64)
+        PLATFORM="linux/arm64"
+        ;;
+    *)
+        echo "⚠️  알 수 없는 아키텍처: $ARCH. 기본값 linux/amd64 사용."
+        PLATFORM="linux/amd64"
+        ;;
+esac
+echo "🔍 감지된 플랫폼: ${PLATFORM}"
+
 # 이미지 파일 확인
 if [ ! -f "${TAR_FILE}" ]; then
     echo "❌ 이미지 파일을 찾을 수 없습니다: ${TAR_FILE}"
@@ -23,7 +39,7 @@ echo "📦 이미지 파일 확인: ${TAR_FILE}"
 
 # 기존 컨테이너 정리
 echo "🧹 기존 컨테이너 정리..."
-docker-compose -f docker-compose.offline.yml down 2>/dev/null || true
+docker compose -f docker-compose.offline.yml down 2>/dev/null || true
 
 # 압축 해제
 echo "🗜️ 이미지 압축 해제 중..."
@@ -46,9 +62,18 @@ else
     echo "✅ 환경 변수 파일 존재"
 fi
 
+# Docker Compose 파일의 플랫폼 설정 업데이트
+echo "🔧 Docker Compose 파일 플랫폼 설정 업데이트 중..."
+if [ "$PLATFORM" = "linux/arm64" ]; then
+    sed -i.bak 's/platform: linux\/amd64/platform: linux\/arm64/' docker-compose.offline.yml
+elif [ "$PLATFORM" = "linux/amd64" ]; then
+    sed -i.bak 's/platform: linux\/arm64/platform: linux\/amd64/' docker-compose.offline.yml
+fi
+rm -f docker-compose.offline.yml.bak 2>/dev/null || true
+
 # Docker Compose로 실행
 echo "🚀 애플리케이션 실행 중..."
-docker-compose -f docker-compose.offline.yml up -d
+docker compose -f docker-compose.offline.yml up -d
 
 # 상태 확인
 echo "⏳ 서비스 시작 대기 중..."
@@ -61,15 +86,15 @@ if curl -f http://localhost:3003/api/health >/dev/null 2>&1; then
     echo "🌐 브라우저에서 접속: http://localhost:3003"
 else
     echo "⚠️  서비스 상태 확인 실패. 로그를 확인하세요:"
-    echo "   docker-compose -f docker-compose.offline.yml logs"
+    echo "   docker compose -f docker-compose.offline.yml logs"
 fi
 
 echo ""
 echo "📋 유용한 명령어:"
-echo "  - 로그 확인: docker-compose -f docker-compose.offline.yml logs -f"
-echo "  - 상태 확인: docker-compose -f docker-compose.offline.yml ps"
-echo "  - 중지: docker-compose -f docker-compose.offline.yml down"
-echo "  - 재시작: docker-compose -f docker-compose.offline.yml restart"
+echo "  - 로그 확인: docker compose -f docker-compose.offline.yml logs -f"
+echo "  - 상태 확인: docker compose -f docker-compose.offline.yml ps"
+echo "  - 중지: docker compose -f docker-compose.offline.yml down"
+echo "  - 재시작: docker compose -f docker-compose.offline.yml restart"
 
 echo ""
 echo "✅ 폐쇄망 배포 완료!" 

@@ -1,6 +1,7 @@
 services:
   chatbot-ui:
     image: chatbot-ui:latest
+    platform: linux/amd64
     ports:
       - "3003:3000"
     environment:
