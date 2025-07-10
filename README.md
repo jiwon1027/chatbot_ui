@@ -70,12 +70,11 @@ cp .env.example .env
 # 환경 변수 수정 (운영 환경에 맞게)
 nano .env
 
-# 오프라인 배포용 이미지 빌드 (자동 플랫폼 감지)
+# 오프라인 배포용 이미지 빌드 (기본 AMD64 플랫폼)
 ./build-for-offline.sh
 
-# 특정 플랫폼으로 빌드하려면:
-DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh  # Intel/AMD
-DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh  # ARM/Apple M1/M2
+# ARM64가 필요한 특별한 경우에만:
+DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
 ```
 
 #### 폐쇄망에서 배포 실행
@@ -209,12 +208,11 @@ npm run clean
 ```bash
 # 에러 예시: "The requested image's platform does not match the detected host platform"
 
-# 해결 방법 1: 자동 플랫폼 감지 (권장)
+# 해결 방법: 기본적으로 AMD64로 빌드됨 (폐쇄망 호환성)
 ./build-for-offline.sh
 
-# 해결 방법 2: 수동 플랫폼 지정
-DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh  # Intel/AMD 서버
-DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh  # ARM/Apple M1/M2
+# ARM64가 필요한 특별한 경우에만:
+DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
 
 # 현재 시스템 아키텍처 확인
 uname -m

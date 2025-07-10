@@ -11,21 +11,9 @@ OFFLINE_DIR="./offline-images"
 VERSION="1.0.0"  # package.json에서 가져온 버전과 동일하게 설정
 TAR_FILE="${OFFLINE_DIR}/chatbot-ui-${VERSION}.tar.gz"
 
-# 플랫폼 자동 감지
-ARCH=$(uname -m)
-case $ARCH in
-    x86_64)
-        PLATFORM="linux/amd64"
-        ;;
-    aarch64|arm64)
-        PLATFORM="linux/arm64"
-        ;;
-    *)
-        echo "⚠️  알 수 없는 아키텍처: $ARCH. 기본값 linux/amd64 사용."
-        PLATFORM="linux/amd64"
-        ;;
-esac
-echo "🔍 감지된 플랫폼: ${PLATFORM}"
+# 플랫폼 고정 설정 (폐쇄망 호환성을 위해 무조건 AMD64)
+PLATFORM="linux/amd64"
+echo "🔧 폐쇄망 호환성을 위해 AMD64로 고정: ${PLATFORM}"
 
 # 이미지 파일 확인
 if [ ! -f "${TAR_FILE}" ]; then
@@ -62,14 +50,8 @@ else
     echo "✅ 환경 변수 파일 존재"
 fi
 
-# Docker Compose 파일의 플랫폼 설정 업데이트
-echo "🔧 Docker Compose 파일 플랫폼 설정 업데이트 중..."
-if [ "$PLATFORM" = "linux/arm64" ]; then
-    sed -i.bak 's/platform: linux\/amd64/platform: linux\/arm64/' docker-compose.offline.yml
-elif [ "$PLATFORM" = "linux/amd64" ]; then
-    sed -i.bak 's/platform: linux\/arm64/platform: linux\/amd64/' docker-compose.offline.yml
-fi
-rm -f docker-compose.offline.yml.bak 2>/dev/null || true
+# Docker Compose 파일의 플랫폼 설정은 이미 AMD64로 고정되어 있음
+echo "✅ Docker Compose 플랫폼: ${PLATFORM}"
 
 # Docker Compose로 실행
 echo "🚀 애플리케이션 실행 중..."

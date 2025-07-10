@@ -11,22 +11,10 @@ VERSION=$(grep '"version"' package.json | cut -d'"' -f4)
 OUTPUT_DIR="./offline-images"
 TAR_FILE="${OUTPUT_DIR}/chatbot-ui-${VERSION}.tar"
 
-# 플랫폼 자동 감지 또는 수동 설정
+# 플랫폼 강제 설정 (폐쇄망 호환성을 위해 무조건 AMD64)
 if [ -z "$DOCKER_PLATFORM" ]; then
-    ARCH=$(uname -m)
-    case $ARCH in
-        x86_64)
-            PLATFORM="linux/amd64"
-            ;;
-        aarch64|arm64)
-            PLATFORM="linux/arm64"
-            ;;
-        *)
-            echo "⚠️  알 수 없는 아키텍처: $ARCH. 기본값 linux/amd64 사용."
-            PLATFORM="linux/amd64"
-            ;;
-    esac
-    echo "🔍 자동 감지된 플랫폼: ${PLATFORM}"
+    PLATFORM="linux/amd64"
+    echo "🔧 폐쇄망 호환성을 위해 AMD64로 강제 설정: ${PLATFORM}"
 else
     PLATFORM=${DOCKER_PLATFORM}
     echo "🏗️  수동 지정된 플랫폼: ${PLATFORM}"
@@ -72,8 +60,8 @@ echo "  - ${TAR_FILE}.gz"
 echo "  - docker-compose.offline.yml"
 echo "  - deploy-offline.sh"
 echo ""
-echo "💡 다른 플랫폼으로 빌드하려면:"
-echo "  - AMD64: DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh"
-echo "  - ARM64: DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh"
+echo "🔧 기본적으로 AMD64 플랫폼으로 빌드됩니다 (폐쇄망 호환성)"
+echo "💡 다른 플랫폼이 필요한 경우:"
+echo "  - DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh"
 echo ""
 echo "🚚 이 파일들을 폐쇄망으로 전송하고 deploy-offline.sh를 실행하세요." 

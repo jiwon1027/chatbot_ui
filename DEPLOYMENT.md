@@ -70,22 +70,20 @@ nano .env
 # 빌드 스크립트 실행 권한 부여
 chmod +x build-for-offline.sh
 
-# 이미지 빌드 및 저장 (기본: AMD64)
+# 이미지 빌드 및 저장 (항상 AMD64로 빌드됨)
 ./build-for-offline.sh
 
-# 특정 플랫폼으로 빌드하려면:
-# AMD64 플랫폼 (Intel/AMD 프로세서)
-DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh
-
-# ARM64 플랫폼 (Apple M1/M2, ARM 서버)
+# ARM64가 필요한 특별한 경우에만:
 DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
 ```
 
 **빌드 스크립트는 다음 작업을 수행합니다:**
-- Docker 이미지 빌드 (플랫폼 명시)
+- Docker 이미지 빌드 (기본 AMD64 플랫폼)
 - 필요한 기본 이미지 다운로드
 - 이미지들을 tar 파일로 저장
 - 압축하여 전송 준비
+
+**중요**: 폐쇄망 호환성을 위해 기본적으로 AMD64 플랫폼으로 빌드됩니다.
 
 ### 4. 전송 파일 확인
 빌드 완료 후 다음 파일들이 생성됩니다:
