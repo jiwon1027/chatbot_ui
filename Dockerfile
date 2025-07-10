@@ -43,6 +43,10 @@ RUN npm install --only=development --no-optional || true
 # 환경 변수 설정 (빌드 시점)
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
+ENV DISABLE_SWC=true
+
+# 내부망 환경 대응 - 캐시 정리
+RUN npm cache clean --force
 
 # Next.js 애플리케이션 빌드
 RUN npm run build
