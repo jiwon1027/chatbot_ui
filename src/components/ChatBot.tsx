@@ -206,8 +206,8 @@ const ChatBot = () => {
     uiLogger.debug('타이핑 상태 시작');
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://34.71.147.202:3000';
-      const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/v1/chat/ollama';
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.20.23.104:3000';
+      const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/v1/chat/completions';
       const modelName = process.env.NEXT_PUBLIC_MODEL_NAME || 'gemma3:1b';
       const fullApiUrl = `${apiBaseUrl}${apiEndpoint}`;
 
@@ -264,7 +264,8 @@ const ChatBot = () => {
       });
       apiLogger.groupEnd();
 
-      const fullContent = data.message?.content || '죄송합니다. 응답을 받을 수 없습니다.';
+      // OpenAI 호환 형식과 Ollama 형식 모두 지원
+      const fullContent = data.choices?.[0]?.message?.content || data.message?.content || '죄송합니다. 응답을 받을 수 없습니다.';
       const botMessageId = (Date.now() + 1).toString();
 
       // 초기 빈 메시지 생성

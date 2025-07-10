@@ -48,6 +48,17 @@ tar -xzf chatbot-ui.tar.gz
 cd chatbot_ui
 ```
 
+### 3. 프록시 환경 설정
+내부망에서 인터넷 접근이 필요한 경우 프록시 설정을 사용합니다:
+
+```bash
+# Docker 빌드 시 프록시 설정
+docker build \
+  --build-arg HTTP_PROXY=http://10.175.24.10:8123 \
+  --build-arg HTTPS_PROXY=http://10.175.24.10:8123 \
+  -t chatbot-ui .
+```
+
 ## 🚀 설치 방법
 
 ### 방법 1: Docker Compose 사용 (권장)
@@ -78,9 +89,10 @@ docker build -t chatbot-ui .
 ```bash
 docker run -d \
   --name chatbot-ui \
-  -p 3000:3000 \
+  -p 3003:3000 \
   -e NODE_ENV=production \
-  -e NEXT_PUBLIC_API_BASE_URL=http://YOUR_API_SERVER:3000 \
+  -e NEXT_PUBLIC_API_BASE_URL=http://172.20.23.104:3000 \
+  -e NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/completions \
   -e NEXT_PUBLIC_MODEL_NAME=gemma3:1b \
   --restart unless-stopped \
   chatbot-ui
@@ -112,8 +124,8 @@ npm run start:prod
 | 변수명 | 설명 | 기본값 | 예시 |
 |--------|------|--------|------|
 | `NODE_ENV` | 실행 환경 | production | production |
-| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL | http://34.71.147.202:3000 | http://10.0.0.100:3000 |
-| `NEXT_PUBLIC_API_ENDPOINT` | API 엔드포인트 | /api/v1/chat/ollama | /api/v1/chat/ollama |
+| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL | http://172.20.23.104:3000 | http://172.20.23.104:3000 |
+| `NEXT_PUBLIC_API_ENDPOINT` | API 엔드포인트 | /api/v1/chat/completions | /api/v1/chat/completions |
 | `NEXT_PUBLIC_MODEL_NAME` | AI 모델명 | gemma3:1b | gemma3:1b |
 
 ### 선택적 환경 변수
@@ -128,8 +140,8 @@ npm run start:prod
 ### .env 파일 예시
 ```env
 NODE_ENV=production
-NEXT_PUBLIC_API_BASE_URL=http://10.0.0.100:3000
-NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/ollama
+NEXT_PUBLIC_API_BASE_URL=http://172.20.23.104:3000
+NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/completions
 NEXT_PUBLIC_MODEL_NAME=gemma3:1b
 NEXT_PUBLIC_TYPING_SPEED=50
 NEXT_PUBLIC_LOG_LEVEL=ERROR
@@ -155,10 +167,10 @@ docker-compose down
 ### 서비스 상태 확인
 ```bash
 # Health Check
-curl http://localhost:3000/api/health
+curl http://localhost:3003/api/health
 
 # 웹 브라우저에서 확인
-http://localhost:3000
+http://localhost:3003
 ```
 
 ## 📊 모니터링 및 관리
@@ -221,10 +233,10 @@ docker-compose config
 #### 4. 포트 충돌
 ```bash
 # 포트 사용 확인
-netstat -tulpn | grep :3000
+netstat -tulpn | grep :3003
 
-# 다른 포트로 실행
-docker-compose -f docker-compose.yml -p 8080:3000 up -d
+# 다른 포트로 실행 (예: 8080포트)
+docker run -d --name chatbot-ui -p 8080:3000 chatbot-ui
 ```
 
 ### 로그 파일 위치
@@ -252,7 +264,8 @@ tar -czf chatbot-ui-backup-$(date +%Y%m%d).tar.gz .
 ---
 
 **⚠️ 보안 주의사항**
-- 운영 환경에서는 기본 포트(3000) 변경 권장
+- 운영 환경에서는 기본 포트(3003) 변경 권장
 - API 토큰 등 민감정보는 별도 보안 저장소 사용
 - 정기적인 보안 업데이트 적용
-- 방화벽 설정으로 불필요한 포트 차단 
+- 방화벽 설정으로 불필요한 포트 차단
+- 프록시 설정 시 인증 정보 보안 유지 
