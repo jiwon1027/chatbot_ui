@@ -8,6 +8,13 @@ const nextConfig: NextConfig = {
   // 내부망 환경 최적화 설정
   productionBrowserSourceMaps: false,
   
+  // SWC 완전 비활성화 (내부망 환경)
+  swcMinify: false,
+  experimental: {
+    esmExternals: 'loose',
+    forceSwcTransforms: false,
+  },
+  
   // 폐쇄망 환경을 위한 설정
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,

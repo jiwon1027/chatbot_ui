@@ -1,19 +1,20 @@
 # 멀티 스테이지 빌드를 사용한 최적화된 Dockerfile
 
 # 프록시 설정
-ARG HTTP_PROXY=http://10.175.24.10:8123
-ARG HTTPS_PROXY=http://10.175.24.10:8123
+
+
+
 
 # 1단계: 의존성 설치
 FROM node:18-alpine AS deps
+ARG http_proxy
+ARG https_proxy
+
+ENV http_proxy=http://10.175.24.10:8123
+ENV https_proxy=http://10.175.24.10:8123
+
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
-
-# 프록시 환경 변수 설정
-ENV HTTP_PROXY=${HTTP_PROXY}
-ENV HTTPS_PROXY=${HTTPS_PROXY}
-ENV http_proxy=${HTTP_PROXY}
-ENV https_proxy=${HTTPS_PROXY}
 
 # package.json과 package-lock.json 복사
 COPY package*.json ./
@@ -25,13 +26,13 @@ RUN npm cache clean --force && \
 
 # 2단계: 빌드
 FROM node:18-alpine AS builder
-WORKDIR /app
+ARG http_proxy
+ARG https_proxy
 
-# 프록시 환경 변수 설정
-ENV HTTP_PROXY=${HTTP_PROXY}
-ENV HTTPS_PROXY=${HTTPS_PROXY}
-ENV http_proxy=${HTTP_PROXY}
-ENV https_proxy=${HTTPS_PROXY}
+ENV http_proxy=http://10.175.24.10:8123
+ENV https_proxy=http://10.175.24.10:8123
+
+WORKDIR /app
 
 # 의존성 복사
 COPY --from=deps /app/node_modules ./node_modules
@@ -44,6 +45,8 @@ RUN npm install --only=development --no-optional || true
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
 ENV DISABLE_SWC=true
+ENV NEXT_SWC_DISABLED=true
+ENV SKIP_SWC_BINARY_DOWNLOAD=true
 
 # 내부망 환경 대응 - 캐시 정리
 RUN npm cache clean --force
@@ -53,6 +56,12 @@ RUN npm run build
 
 # 3단계: 런타임
 FROM node:18-alpine AS runner
+ARG http_proxy
+ARG https_proxy
+
+ENV http_proxy=http://10.175.24.10:8123
+ENV https_proxy=http://10.175.24.10:8123
+
 WORKDIR /app
 
 # 보안을 위한 사용자 추가
