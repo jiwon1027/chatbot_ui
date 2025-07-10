@@ -16,8 +16,8 @@ AI 기반 채팅 인터페이스입니다. 깔끔한 UI로 제공되며, PC와 �
 - Enter 키로 빠른 전송 (Shift+Enter로 줄바꿈)
 
 ### 🔗 API 연동
-- Ollama API 연동
-- 기본 엔드포인트: `http://34.71.147.202:3000/api/v1/chat/ollama`
+- OpenAI 호환 API 연동
+- 기본 엔드포인트: `http://172.20.23.104:3000/api/v1/chat/completions`
 - 환경 변수를 통한 설정 가능
 - 오류 처리 및 재시도 로직
 
@@ -60,32 +60,31 @@ npm run build:prod
 npm run start:prod
 ```
 
-### 🐳 Docker 배포 (권장)
+### 🐳 운영 환경 배포 (권장)
 
-#### 빠른 시작
+#### 인터넷망에서 이미지 빌드
 ```bash
 # 환경 설정 파일 생성
 cp .env.example .env
 
-# 환경 변수 수정
+# 환경 변수 수정 (운영 환경에 맞게)
 nano .env
 
-# Docker Compose로 실행
-docker-compose up -d
+# 오프라인 배포용 이미지 빌드
+./build-for-offline.sh
 ```
 
-#### 직접 Docker 명령어
+#### 폐쇄망에서 배포 실행
 ```bash
-# 이미지 빌드
-docker build -t chatbot-ui .
+# 전송받은 파일들을 확인하고 배포
+./deploy-offline.sh
+```
 
-# 컨테이너 실행
-docker run -d \
-  --name chatbot-ui \
-  -p 3000:3000 \
-  -e NEXT_PUBLIC_API_BASE_URL=http://YOUR_API_SERVER:3000 \
-  --restart unless-stopped \
-  chatbot-ui
+#### 개발 환경에서 직접 실행
+```bash
+# 개발용 Docker 실행
+docker build -t chatbot-ui .
+docker run -p 3003:3000 chatbot-ui
 ```
 
 ## ⚙️ 환경 설정
@@ -97,8 +96,8 @@ docker run -d \
 NODE_ENV=production
 
 # API 설정
-NEXT_PUBLIC_API_BASE_URL=http://34.71.147.202:3000
-NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/ollama
+NEXT_PUBLIC_API_BASE_URL=http://172.20.23.104:3000
+NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/completions
 NEXT_PUBLIC_MODEL_NAME=gemma3:1b
 
 # UI 설정
@@ -110,8 +109,8 @@ NEXT_PUBLIC_LOG_LEVEL=ERROR
 
 | 환경 변수 | 설명 | 기본값 |
 |-----------|------|--------|
-| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL | http://34.71.147.202:3000 |
-| `NEXT_PUBLIC_API_ENDPOINT` | API 엔드포인트 | /api/v1/chat/ollama |
+| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL | http://172.20.23.104:3000 |
+| `NEXT_PUBLIC_API_ENDPOINT` | API 엔드포인트 | /api/v1/chat/completions |
 | `NEXT_PUBLIC_MODEL_NAME` | AI 모델명 | gemma3:1b |
 | `NEXT_PUBLIC_TYPING_SPEED` | 타이핑 속도 (ms) | 50 |
 | `NEXT_PUBLIC_LOG_LEVEL` | 로그 레벨 | ERROR |
@@ -144,10 +143,10 @@ src/
 
 ```bash
 # 애플리케이션 상태 확인
-curl http://localhost:3000/api/health
+curl http://localhost:3003/api/health
 
 # 로그 모니터링
-docker-compose logs -f chatbot-ui
+docker-compose -f docker-compose.offline.yml logs -f
 
 # 리소스 모니터링
 docker stats
@@ -185,12 +184,13 @@ npm run clean
 ## 🔍 기술 스택
 
 - **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS 4
+- **Styling**: Tailwind CSS 3.4.16
 - **UI Components**: Lucide React (아이콘)
 - **Code Highlighting**: Prism React Renderer
 - **HTTP Client**: Fetch API
 - **Auto-resize**: React Textarea Autosize
 - **Container**: Docker, Docker Compose
+- **Deployment**: 오프라인 배포 지원
 
 ## 🔐 보안 고려사항
 
