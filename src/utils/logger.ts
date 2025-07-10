@@ -17,7 +17,7 @@ interface LoggerConfig {
 
 // 기본 설정
 const defaultConfig: LoggerConfig = {
-  level: process.env.NODE_ENV === 'production' ? LogLevel.WARN : LogLevel.DEBUG,
+  level: import.meta.env.MODE === 'production' ? LogLevel.WARN : LogLevel.DEBUG,
   enableConsole: true,
   enableTimestamp: true,
   prefix: 'ChatBot'
@@ -169,7 +169,7 @@ export const uiLogger = createLogger('UI');
 export const errorLogger = createLogger('ERROR');
 
 // 운영 환경에서 로그 레벨 조정
-if (process.env.NODE_ENV === 'production') {
+if (import.meta.env.MODE === 'production') {
   logger.updateConfig({ level: LogLevel.ERROR, enableConsole: false });
   apiLogger.updateConfig({ level: LogLevel.ERROR, enableConsole: false });
   uiLogger.updateConfig({ level: LogLevel.ERROR, enableConsole: false });

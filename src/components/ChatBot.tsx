@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useRef, useEffect } from 'react';
 import { Highlight, themes } from 'prism-react-renderer';
 import TextareaAutosize from 'react-textarea-autosize';
@@ -138,17 +136,13 @@ const ChatBot = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [initError, setInitError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const typingIntervalRef = useRef<number | null>(null);
 
   // 환경 변수 안전성 검사
   const validateEnvironment = () => {
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-      const endpoint = process.env.NEXT_PUBLIC_API_ENDPOINT;
-      
-      if (!baseUrl || !endpoint) {
-        throw new Error(`환경 변수 누락: baseUrl=${baseUrl}, endpoint=${endpoint}`);
-      }
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://172.20.23.104:3000';
+      const endpoint = import.meta.env.VITE_API_ENDPOINT || '/api/v1/chat/completions';
       
       logger.info('환경 변수 검증 완료', { baseUrl, endpoint });
       return true;
@@ -276,9 +270,9 @@ const ChatBot = () => {
     uiLogger.debug('타이핑 상태 시작');
 
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://172.20.23.104:3000';
-      const apiEndpoint = process.env.NEXT_PUBLIC_API_ENDPOINT || '/api/v1/chat/completions';
-      const modelName = process.env.NEXT_PUBLIC_MODEL_NAME || 'gemma3:1b';
+          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://172.20.23.104:3000';
+    const apiEndpoint = import.meta.env.VITE_API_ENDPOINT || '/api/v1/chat/completions';
+    const modelName = import.meta.env.VITE_MODEL_NAME || 'gemma3:1b';
       const fullApiUrl = `${apiBaseUrl}${apiEndpoint}`;
 
       const requestPayload = {
@@ -374,7 +368,7 @@ const ChatBot = () => {
             contentLength: fullContent.length
           });
         }
-      }, parseInt(process.env.NEXT_PUBLIC_TYPING_SPEED || '50')); // 타이핑 속도 설정 가능
+              }, parseInt(import.meta.env.VITE_TYPING_SPEED || '50')); // 타이핑 속도 설정 가능
 
     } catch (error) {
       errorLogger.error('API 요청 실패', {
@@ -918,18 +912,7 @@ const ChatBot = () => {
         </div>
       </div>
 
-      {/* CSS Animations */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes bounce {
-          0%, 80%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-8px); }
-        }
-      `}</style>
+      {/* CSS Animations - 애니메이션은 globals.css에 정의되어 있음 */}
     </div>
   );
 };
@@ -958,7 +941,7 @@ const MessageContent = ({ content }: { content: string }) => {
     parts.push(
       <div key={`code-${match.index}`} style={{ margin: '12px 0' }}>
         <Highlight theme={themes.github} code={code} language={language}>
-          {({ className, style, tokens, getLineProps, getTokenProps }) => (
+          {({ style, tokens, getLineProps, getTokenProps }) => (
             <pre 
               style={{
                 ...style,
