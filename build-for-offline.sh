@@ -11,6 +11,27 @@ VERSION=$(grep '"version"' package.json | cut -d'"' -f4)
 OUTPUT_DIR="./offline-images"
 TAR_FILE="${OUTPUT_DIR}/chatbot-ui-${VERSION}.tar"
 
+# 플랫폼 자동 감지 또는 수동 설정
+if [ -z "$DOCKER_PLATFORM" ]; then
+    ARCH=$(uname -m)
+    case $ARCH in
+        x86_64)
+            PLATFORM="linux/amd64"
+            ;;
+        aarch64|arm64)
+            PLATFORM="linux/arm64"
+            ;;
+        *)
+            echo "⚠️  알 수 없는 아키텍처: $ARCH. 기본값 linux/amd64 사용."
+            PLATFORM="linux/amd64"
+            ;;
+    esac
+    echo "🔍 자동 감지된 플랫폼: ${PLATFORM}"
+else
+    PLATFORM=${DOCKER_PLATFORM}
+    echo "🏗️  수동 지정된 플랫폼: ${PLATFORM}"
+fi
+
 echo "📦 버전: ${VERSION}"
 
 # 출력 디렉토리 생성
@@ -22,11 +43,11 @@ docker image prune -f
 
 # Docker 이미지 빌드
 echo "🔨 Docker 이미지 빌드 중..."
-docker build -t "${IMAGE_NAME}:${VERSION}" -t "${IMAGE_NAME}:latest" .
+docker build --platform "${PLATFORM}" -t "${IMAGE_NAME}:${VERSION}" -t "${IMAGE_NAME}:latest" .
 
 # 의존성 이미지들도 저장 (런타임에 필요한 기본 이미지)
 echo "📥 기본 이미지 다운로드..."
-docker pull node:18-alpine
+docker pull --platform "${PLATFORM}" node:18-alpine
 
 # 이미지를 tar 파일로 저장
 echo "💾 이미지를 tar 파일로 저장 중..."
@@ -50,5 +71,9 @@ echo "📋 폐쇄망 전송 파일:"
 echo "  - ${TAR_FILE}.gz"
 echo "  - docker-compose.offline.yml"
 echo "  - deploy-offline.sh"
+echo ""
+echo "💡 다른 플랫폼으로 빌드하려면:"
+echo "  - AMD64: DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh"
+echo "  - ARM64: DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh"
 echo ""
 echo "🚚 이 파일들을 폐쇄망으로 전송하고 deploy-offline.sh를 실행하세요." 

@@ -70,8 +70,12 @@ cp .env.example .env
 # 환경 변수 수정 (운영 환경에 맞게)
 nano .env
 
-# 오프라인 배포용 이미지 빌드
+# 오프라인 배포용 이미지 빌드 (자동 플랫폼 감지)
 ./build-for-offline.sh
+
+# 특정 플랫폼으로 빌드하려면:
+DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh  # Intel/AMD
+DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh  # ARM/Apple M1/M2
 ```
 
 #### 폐쇄망에서 배포 실행
@@ -199,19 +203,23 @@ npm run clean
 - 민감정보 환경 변수 분리
 - 포트 및 네트워크 보안 설정
 
-## 🤝 기여
+## 🚨 문제해결
 
-프로젝트 개선에 기여하고 싶으시다면:
+### 플랫폼 호환성 에러
+```bash
+# 에러 예시: "The requested image's platform does not match the detected host platform"
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+# 해결 방법 1: 자동 플랫폼 감지 (권장)
+./build-for-offline.sh
 
-## 📄 라이선스
+# 해결 방법 2: 수동 플랫폼 지정
+DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh  # Intel/AMD 서버
+DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh  # ARM/Apple M1/M2
 
-이 프로젝트는 MIT 라이선스 하에 배포됩니다.
+# 현재 시스템 아키텍처 확인
+uname -m
+# x86_64 = AMD64, aarch64/arm64 = ARM64
+```
 
 ---
 

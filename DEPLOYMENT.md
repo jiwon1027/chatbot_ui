@@ -70,12 +70,19 @@ nano .env
 # 빌드 스크립트 실행 권한 부여
 chmod +x build-for-offline.sh
 
-# 이미지 빌드 및 저장
+# 이미지 빌드 및 저장 (기본: AMD64)
 ./build-for-offline.sh
+
+# 특정 플랫폼으로 빌드하려면:
+# AMD64 플랫폼 (Intel/AMD 프로세서)
+DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh
+
+# ARM64 플랫폼 (Apple M1/M2, ARM 서버)
+DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
 ```
 
 **빌드 스크립트는 다음 작업을 수행합니다:**
-- Docker 이미지 빌드
+- Docker 이미지 빌드 (플랫폼 명시)
 - 필요한 기본 이미지 다운로드
 - 이미지들을 tar 파일로 저장
 - 압축하여 전송 준비
@@ -242,6 +249,21 @@ docker-compose -f docker-compose.offline.yml exec chatbot-ui env | grep NEXT_PUB
 
 # 네트워크 연결 확인
 docker-compose -f docker-compose.offline.yml exec chatbot-ui ping 172.20.23.104
+```
+
+**4. 플랫폼 호환성 에러**
+```bash
+# 에러 메시지 예시:
+# "The requested image's platform (linux/arm64) does not match the detected host platform (linux/amd64)"
+
+# 해결 방법: 올바른 플랫폼으로 다시 빌드
+DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh  # AMD64 환경
+DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh  # ARM64 환경
+
+# 현재 시스템 아키텍처 확인
+uname -m
+# x86_64 = AMD64
+# aarch64 = ARM64
 ```
 
 ### 디버깅 명령어
