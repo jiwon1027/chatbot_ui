@@ -327,25 +327,26 @@ const ChatBot = () => {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
+      // API 응답 파싱 및 로깅
       const data = await response.json();
       apiLogger.info('API 응답 파싱 완료', {
         model: data.model,
-        done: data.done,
-        messageRole: data.message?.role,
-        contentLength: data.message?.content?.length,
+        token_count: data.token_count,
+        responseLength: data.response?.length || 0,
         responseData: data
       });
       
       // API 성공 로그 기록
       customApiLogger.logApiCall(fullApiUrl, 'POST', duration, {
         model: data.model,
-        responseLength: data.message?.content?.length || data.choices?.[0]?.message?.content?.length || 0
+        token_count: data.token_count,
+        responseLength: data.response?.length || 0
       });
       
       apiLogger.groupEnd();
 
-      // OpenAI 호환 형식과 Ollama 형식 모두 지원
-      const fullContent = data.choices?.[0]?.message?.content || data.message?.content || '죄송합니다. 응답을 받을 수 없습니다.';
+      // 새로운 응답 포맷: {"response": {답변}, "model": "gemm3:27b", "token_count": 0}
+      const fullContent = data.response || '죄송합니다. 응답을 받을 수 없습니다.';
       const botMessageId = (Date.now() + 1).toString();
 
       // 초기 빈 메시지 생성
@@ -381,10 +382,12 @@ const ChatBot = () => {
           logger.info('타이핑 효과 완료', { 
             messageId: botMessageId,
             finalContent: fullContent,
-            contentLength: fullContent.length
+            contentLength: fullContent.length,
+            model: data.model,
+            tokenCount: data.token_count
           });
         }
-              }, parseInt(import.meta.env.VITE_TYPING_SPEED || '50')); // 타이핑 속도 설정 가능
+      }, parseInt(import.meta.env.VITE_TYPING_SPEED || '50')); // 타이핑 속도 설정 가능
 
     } catch (error) {
       const errorDuration = performance.now() - startTime;

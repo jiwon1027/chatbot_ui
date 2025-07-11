@@ -375,7 +375,7 @@ docker run --memory="512m" chatbot-ui
 
 **HTTPS 설정**
 ```bash
-# 로드 밸런서나 리버스 프록시에서 HTTPS 설정
+# 로드 밸런서에서 HTTPS 설정
 # 또는 Docker 컨테이너 앞에 SSL 터미네이션 설정
 
 # 환경 변수로 보안 설정

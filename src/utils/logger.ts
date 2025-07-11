@@ -15,7 +15,7 @@ interface LoggerConfig {
   prefix: string;
 }
 
-// 기본 설정
+// 기본 설정 - 개발 환경에서는 모든 로그 활성화
 const defaultConfig: LoggerConfig = {
   level: import.meta.env.MODE === 'production' ? LogLevel.WARN : LogLevel.DEBUG,
   enableConsole: true,
@@ -68,18 +68,28 @@ class Logger {
     };
   }
 
-  // 콘솔 출력
-  private outputToConsole(logEntry: LogEntry, consoleMethod: Function) {
+  // 콘솔 출력 - 모든 로그를 console.log로 통일하여 확실히 보이도록 함
+  private outputToConsole(logEntry: LogEntry, originalMethod: Function) {
     if (!this.config.enableConsole) return;
 
     const prefix = `[${logEntry.prefix} ${logEntry.level}]`;
     const timestamp = this.config.enableTimestamp ? ` ${logEntry.timestamp} -` : '';
     const logMessage = `${prefix}${timestamp} ${logEntry.message}`;
 
-    if (logEntry.data !== undefined) {
-      consoleMethod(logMessage, logEntry.data);
+    // 개발 환경에서는 모든 로그를 console.log로 출력하여 확실히 보이도록 함
+    if (import.meta.env.MODE === 'development') {
+      if (logEntry.data !== undefined) {
+        console.log(logMessage, logEntry.data);
+      } else {
+        console.log(logMessage);
+      }
     } else {
-      consoleMethod(logMessage);
+      // 운영 환경에서는 원래 메소드 사용
+      if (logEntry.data !== undefined) {
+        originalMethod(logMessage, logEntry.data);
+      } else {
+        originalMethod(logMessage);
+      }
     }
   }
 
@@ -168,10 +178,16 @@ export const apiLogger = createLogger('API');
 export const uiLogger = createLogger('UI');
 export const errorLogger = createLogger('ERROR');
 
-// 운영 환경에서 로그 레벨 조정
+// 개발 환경에서는 모든 로그 활성화, 운영 환경에서는 필요한 로그만 활성화
 if (import.meta.env.MODE === 'production') {
   logger.updateConfig({ level: LogLevel.ERROR, enableConsole: false });
   apiLogger.updateConfig({ level: LogLevel.ERROR, enableConsole: false });
   uiLogger.updateConfig({ level: LogLevel.ERROR, enableConsole: false });
   errorLogger.updateConfig({ level: LogLevel.ERROR, enableConsole: true }); // 에러만 콘솔에 출력
+} else {
+  // 개발 환경에서는 모든 로그 활성화
+  logger.updateConfig({ level: LogLevel.DEBUG, enableConsole: true });
+  apiLogger.updateConfig({ level: LogLevel.DEBUG, enableConsole: true });
+  uiLogger.updateConfig({ level: LogLevel.DEBUG, enableConsole: true });
+  errorLogger.updateConfig({ level: LogLevel.DEBUG, enableConsole: true });
 } 
