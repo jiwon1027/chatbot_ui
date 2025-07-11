@@ -1,224 +1,241 @@
-# 챗봇 UI - 운영 환경
+# ChatBot UI
 
-AI 기반 채팅 인터페이스입니다. 깔끔한 UI로 제공되며, PC와 모바일 디바이스를 모두 지원합니다.
+React + Vite 기반의 모던 챗봇 사용자 인터페이스입니다.
 
 ## 🚀 주요 기능
 
-### 📱 반응형 디자인
-- **PC 환경**: 우측 하단 고정 팝업 (320px × 384px)
-- **모바일 환경**: 전체 화면 크기로 자동 조정
-- 모던한 UI 디자인
+- **직관적인 UI**: 모던하고 사용자 친화적인 인터페이스
+- **실시간 타이핑 효과**: 자연스러운 대화 경험
+- **코드 하이라이팅**: Prism.js 기반 구문 강조
+- **응답형 디자인**: 모든 디바이스에서 최적화된 경험
+- **피드백 시스템**: 사용자 만족도 수집
+- **고급 로깅**: 파일 기반 로그 저장 및 일일 롤오버
+- **에러 처리**: 강력한 에러 복구 및 사용자 알림
 
-### 💬 채팅 인터페이스
-- 실시간 질의/답변 채팅
-- 타이핑 효과 (속도 조정 가능)
-- 메시지 자동 스크롤
-- Enter 키로 빠른 전송 (Shift+Enter로 줄바꿈)
+## 🛠️ 기술 스택
 
-### 🔗 API 연동
-- OpenAI 호환 API 연동
-- 기본 엔드포인트: `http://172.20.23.104:3000/api/v1/chat/completions`
-- 환경 변수를 통한 설정 가능
-- 오류 처리 및 재시도 로직
+- **Frontend**: React 19, TypeScript
+- **Build Tool**: Vite 5.2.0
+- **Styling**: Tailwind CSS
+- **Code Highlighting**: Prism React Renderer
+- **UI Components**: Lucide React Icons
+- **Deployment**: Docker
 
-### 💡 코드 강조
-- 소스 코드 자동 감지 및 강조
-- 인라인 코드 및 코드 블록 지원
-- 다양한 프로그래밍 언어 지원
+## 📦 설치 및 실행
 
-### 📊 피드백 시스템
-- 👍 👎 피드백 버튼
-- 마크다운 복사 기능
-- 시간 표시 기능
+### 로컬 개발 환경
 
-## 🛠️ 설치 및 실행
-
-### 🔧 개발 환경
-
-#### 필요 조건
-- Node.js 18.0 이상
-- npm 또는 yarn
-
-#### 설치
 ```bash
 # 의존성 설치
 npm install
 
-# 환경 설정 파일 생성
-cp .env.example .env
-
 # 개발 서버 실행
 npm run dev
 ```
 
-#### 빌드 및 배포
-```bash
-# 프로덕션 빌드
-npm run build:prod
+개발 서버는 http://localhost:3003에서 실행됩니다.
 
-# 빌드된 앱 실행
-npm run start:prod
+### Docker를 이용한 배포
+
+```bash
+# Docker 이미지 빌드 및 실행
+docker compose up -d
+
+# 로그 확인
+docker compose logs -f
+
+# 중지
+docker compose down
 ```
 
-### 🐳 운영 환경 배포 (권장)
+애플리케이션은 http://localhost:3003에서 접근 가능합니다.
 
-#### 인터넷망에서 이미지 빌드
-```bash
-# 환경 설정 파일 생성
-cp .env.example .env
+## ⚙️ 환경 변수
 
-# 환경 변수 수정 (운영 환경에 맞게)
-nano .env
-
-# 오프라인 배포용 이미지 빌드 (기본 AMD64 플랫폼)
-./build-for-offline.sh
-
-# ARM64가 필요한 특별한 경우에만:
-DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
-```
-
-#### 폐쇄망에서 배포 실행
-```bash
-# 전송받은 파일들을 확인하고 배포
-./deploy-offline.sh
-```
-
-#### 개발 환경에서 직접 실행
-```bash
-# 개발용 Docker 실행
-docker build -t chatbot-ui .
-docker run -p 3003:3000 chatbot-ui
-```
-
-## ⚙️ 환경 설정
-
-### 필수 환경 변수
+`.env` 파일을 생성하여 다음 환경 변수를 설정하세요:
 
 ```env
-# 환경 설정
-NODE_ENV=production
-
 # API 설정
-NEXT_PUBLIC_API_BASE_URL=http://172.20.23.104:3000
-NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/completions
-NEXT_PUBLIC_MODEL_NAME=gemma3:1b
+VITE_API_BASE_URL=http://172.20.23.104:3000
+VITE_API_ENDPOINT=/api/v1/chat/completions
+VITE_MODEL_NAME=gemma3:1b
 
 # UI 설정
-NEXT_PUBLIC_TYPING_SPEED=50
-NEXT_PUBLIC_LOG_LEVEL=ERROR
+VITE_TYPING_SPEED=50
+VITE_LOG_LEVEL=DEBUG
 ```
 
-### 커스터마이징 가능한 옵션
+### 환경 변수 설명
 
-| 환경 변수 | 설명 | 기본값 |
-|-----------|------|--------|
-| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL | http://172.20.23.104:3000 |
-| `NEXT_PUBLIC_API_ENDPOINT` | API 엔드포인트 | /api/v1/chat/completions |
-| `NEXT_PUBLIC_MODEL_NAME` | AI 모델명 | gemma3:1b |
-| `NEXT_PUBLIC_TYPING_SPEED` | 타이핑 속도 (ms) | 50 |
-| `NEXT_PUBLIC_LOG_LEVEL` | 로그 레벨 | ERROR |
+| 변수명 | 설명 | 기본값 |
+|--------|------|--------|
+| `VITE_API_BASE_URL` | 챗봇 API 서버 주소 | `http://172.20.23.104:3000` |
+| `VITE_API_ENDPOINT` | API 엔드포인트 경로 | `/api/v1/chat/completions` |
+| `VITE_MODEL_NAME` | 사용할 AI 모델명 | `gemma3:1b` |
+| `VITE_TYPING_SPEED` | 타이핑 효과 속도 (ms) | `50` |
+| `VITE_LOG_LEVEL` | 로그 레벨 | `DEBUG` |
 
-## 📁 프로젝트 구조
+## 📊 로깅 시스템
+
+### 클라이언트 로깅
+- **파일 기반**: 로그를 파일로 저장
+- **일일 롤오버**: 매일 자동으로 로그 파일 생성
+- **로컬스토리지 백업**: 네트워크 오류 시 임시 저장
+- **성능 모니터링**: API 응답 시간 및 성능 메트릭 수집
+
+### 로그 카테고리
+- `CONFIG`: 환경 설정 관련
+- `API`: API 호출 및 응답
+- `USER`: 사용자 액션
+- `PERFORMANCE`: 성능 메트릭
+- `VALIDATION`: 유효성 검사
+
+### 로그 파일 위치
+```
+logs/
+├── chatbot-2025-01-10.log
+├── chatbot-2025-01-09.log
+└── ...
+```
+
+## 🏗️ 프로젝트 구조
 
 ```
-src/
-├── app/
-│   ├── api/
-│   │   ├── feedback/       # 피드백 API
-│   │   └── health/         # 헬스체크 API
-│   ├── globals.css         # 글로벌 CSS 스타일
-│   ├── layout.tsx          # 앱 레이아웃
-│   └── page.tsx            # 메인 페이지
-├── components/
-│   └── ChatBot.tsx         # 채팅봇 메인 컴포넌트
-└── utils/
-    ├── logger.ts           # 클라이언트 로거
-    └── serverLogger.ts     # 서버 로거
+chatbot_ui/
+├── src/
+│   ├── components/
+│   │   └── ChatBot.tsx      # 메인 챗봇 컴포넌트
+│   ├── utils/
+│   │   ├── logger.ts        # 기본 로거
+│   │   └── fileLogger.ts    # 파일 로거 (고급 기능)
+│   ├── App.tsx              # 루트 컴포넌트
+│   ├── main.tsx             # 앱 엔트리 포인트
+│   ├── globals.css          # 전역 스타일
+│   └── vite-env.d.ts        # Vite 타입 정의
+├── public/
+│   └── ico_chat.gif         # 챗봇 아이콘
+├── docker-compose.yml       # Docker Compose 설정
+├── Dockerfile               # Docker 빌드 설정
+├── vite.config.ts          # Vite 설정
+└── package.json            # 프로젝트 의존성
 ```
 
-## 🚀 운영 환경 배포
+## 🔧 빌드 및 배포
 
-### 폐쇄망 환경 배포
-
-자세한 설치 및 운영 가이드는 [DEPLOYMENT.md](./DEPLOYMENT.md)를 참고하세요.
-
-### 모니터링
+### 프로덕션 빌드
 
 ```bash
-# 애플리케이션 상태 확인
-curl http://localhost:3003/api/health
+# 타입 체크 및 빌드
+npm run build
 
-# 로그 모니터링
-docker compose -f docker-compose.offline.yml logs -f
-
-# 리소스 모니터링
-docker stats
+# 빌드된 파일 미리보기
+npm run preview
 ```
 
-## 🔧 개발 스크립트
+빌드된 파일은 `dist/` 디렉토리에 생성됩니다.
 
+### Docker 멀티스테이지 빌드
+
+```dockerfile
+# Node.js에서 React 앱 빌드 및 실행
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
+EXPOSE 3003
+CMD ["npm", "run", "preview"]
+```
+
+## 🧪 개발 도구
+
+### 코드 품질
 ```bash
-# 개발 서버 실행
-npm run dev
-
-# 타입 검사
+# TypeScript 타입 체크
 npm run type-check
 
-# 린트 검사
+# ESLint 실행
 npm run lint
-
-# 빌드
-npm run build
-npm run build:prod
-
-# 정리
-npm run clean
 ```
 
-## 📱 사용법
+### 디버깅
+- 브라우저 개발자 도구에서 로그 확인
+- `fileLogger` 객체를 통한 실시간 로그 모니터링
+- 성능 메트릭 및 API 응답 시간 추적
 
-1. **챗봇 열기**: 우측 하단의 메시지 아이콘 클릭
-2. **질문 입력**: 텍스트 입력창에 질문 작성
-3. **메시지 전송**: Enter 키 또는 전송 버튼 클릭
-4. **피드백 제공**: 봇 답변에 대해 👍👎 피드백
-5. **복사 기능**: 마크다운 복사 버튼 활용
-6. **챗봇 닫기**: 우측 상단의 X 버튼 클릭
+## 🔒 보안 고려사항
 
-## 🔍 기술 스택
+- **환경 변수**: 민감한 정보는 환경 변수로 관리
+- **CORS**: API 서버에서 적절한 CORS 설정 필요
+- **Content Security Policy**: 프로덕션 환경에서 CSP 헤더 설정 권장
+- **HTTPS**: 프로덕션 환경에서 HTTPS 사용 권장
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS 3.4.16
-- **UI Components**: Lucide React (아이콘)
-- **Code Highlighting**: Prism React Renderer
-- **HTTP Client**: Fetch API
-- **Auto-resize**: React Textarea Autosize
-- **Container**: Docker, Docker Compose
-- **Deployment**: 오프라인 배포 지원
+## 🚨 문제 해결
 
-## 🔐 보안 고려사항
+### 일반적인 문제들
 
-- 운영 환경에서 에러 로그만 출력
-- 보안 헤더 설정
-- 민감정보 환경 변수 분리
-- 포트 및 네트워크 보안 설정
-
-## 🚨 문제해결
-
-### 플랫폼 호환성 에러
+**1. API 연결 오류**
 ```bash
-# 에러 예시: "The requested image's platform does not match the detected host platform"
+# 환경 변수 확인
+echo $VITE_API_BASE_URL
 
-# 해결 방법: 기본적으로 AMD64로 빌드됨 (폐쇄망 호환성)
-./build-for-offline.sh
-
-# ARM64가 필요한 특별한 경우에만:
-DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
-
-# 현재 시스템 아키텍처 확인
-uname -m
-# x86_64 = AMD64, aarch64/arm64 = ARM64
+# 네트워크 연결 테스트
+curl -I http://172.20.23.104:3000/api/v1/chat/completions
 ```
 
----
+**2. Docker 빌드 실패**
+```bash
+# Docker 로그 확인
+docker compose logs chatbot-ui
 
-**운영 환경 버전**: 최적화된 성능과 보안을 위해 설계된 프로덕션 레디 챗봇 UI입니다. 
+# 이미지 재빌드
+docker compose build --no-cache
+```
+
+**3. 포트 충돌**
+```bash
+# 포트 사용 확인
+lsof -i :3003
+
+# 다른 포트로 실행
+VITE_PORT=3004 npm run dev
+```
+
+### 로그 분석
+```bash
+# 오늘 로그 확인
+tail -f logs/chatbot-$(date +%Y-%m-%d).log
+
+# 에러 로그만 필터링
+grep -i error logs/chatbot-$(date +%Y-%m-%d).log
+
+# API 호출 로그 확인
+grep -i "api" logs/chatbot-$(date +%Y-%m-%d).log
+```
+
+## 📈 성능 최적화
+
+- **코드 분할**: Vite의 동적 import 활용
+- **이미지 최적화**: WebP 형식 사용 권장
+- **브라우저 캐싱**: 정적 자산 캐싱 설정
+- **번들 크기 최적화**: Tree shaking 및 압축
+
+## 🤝 기여하기
+
+1. Fork this repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 라이선스
+
+이 프로젝트는 MIT 라이선스 하에 있습니다.
+
+## 🔗 관련 문서
+
+- [배포 가이드](DEPLOYMENT.md)
+- [Vite 공식 문서](https://vitejs.dev/)
+- [React 공식 문서](https://react.dev/)
+- [Tailwind CSS 문서](https://tailwindcss.com/) 

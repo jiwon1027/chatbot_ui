@@ -38,3 +38,6 @@ next-env.d.ts
 # logs
 /logs
 /logs/*.log
+
+# YoYo AI version control directory
+.yoyo/

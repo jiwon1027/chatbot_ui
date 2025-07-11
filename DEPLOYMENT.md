@@ -1,315 +1,445 @@
-# 챗봇 UI 운영 환경 배포 가이드
+# ChatBot UI 배포 가이드
+
+React + Vite 기반 ChatBot UI의 배포 가이드입니다.
 
 ## 📋 목차
-1. [시스템 요구사항](#시스템-요구사항)
-2. [배포 방식 개요](#배포-방식-개요)
-3. [인터넷망에서 빌드](#인터넷망에서-빌드)
-4. [폐쇄망 환경 배포](#폐쇄망-환경-배포)
-5. [환경 설정](#환경-설정)
-6. [모니터링 및 관리](#모니터링-및-관리)
-7. [문제해결](#문제해결)
 
-## 🖥️ 시스템 요구사항
+1. [개발 환경 설정](#개발-환경-설정)
+2. [로컬 배포](#로컬-배포)
+3. [Docker 배포](#docker-배포)
+4. [운영 환경 배포](#운영-환경-배포)
+5. [모니터링 및 로그](#모니터링-및-로그)
+6. [문제 해결](#문제-해결)
 
-### 최소 요구사항
-- **CPU**: 2 Core 이상
-- **메모리**: 4GB RAM 이상
-- **스토리지**: 10GB 이상
-- **운영체제**: Linux (Ubuntu 20.04 LTS 권장)
+## 🛠️ 개발 환경 설정
 
-### 권장 요구사항
-- **CPU**: 4 Core 이상
-- **메모리**: 8GB RAM 이상
-- **스토리지**: 20GB 이상 (SSD 권장)
+### 시스템 요구사항
 
-### 필수 소프트웨어
-- **인터넷망**: Docker 20.10 이상, Docker Compose 1.29 이상, Node.js 18 이상
-- **폐쇄망**: Docker 20.10 이상, Docker Compose 1.29 이상
+- **Node.js**: 18.0 이상
+- **npm**: 9.0 이상
+- **Docker**: 20.10 이상 (선택사항)
+- **Docker Compose**: 2.0 이상 (선택사항)
 
-## 🔄 배포 방식 개요
+### 환경 변수 설정
 
-본 프로젝트는 **오프라인 배포**를 지원합니다:
-
-1. **인터넷망**: 소스코드 빌드 → Docker 이미지 생성 → tar 파일로 압축
-2. **전송**: 압축된 이미지 파일을 폐쇄망으로 전송
-3. **폐쇄망**: 이미지 로드 → 컨테이너 실행
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   인터넷망      │    │     전송        │    │    폐쇄망       │
-│                 │    │                 │    │                 │
-│ 1. 소스코드     │    │ 4. 압축된 이미지 │    │ 5. 이미지 로드  │
-│ 2. 이미지 빌드  │───▶│    파일 전송     │───▶│ 6. 컨테이너 실행│
-│ 3. 이미지 저장  │    │                 │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## 🏗️ 인터넷망에서 빌드
-
-### 1. 소스코드 준비
+1. **환경 변수 파일 생성**
 ```bash
-# 프로젝트 클론
-git clone <repository-url>
-cd chatbot_ui
+# .env 파일 생성
+cat > .env << 'EOF'
+# API 설정
+VITE_API_BASE_URL=http://172.20.23.104:3000
+VITE_API_ENDPOINT=/api/v1/chat/completions
+VITE_MODEL_NAME=gemma3:1b
 
-# 의존성 설치
+# UI 설정
+VITE_TYPING_SPEED=50
+VITE_LOG_LEVEL=DEBUG
+EOF
+```
+
+2. **의존성 설치**
+```bash
 npm install
 ```
 
-### 2. 환경 변수 설정
-```bash
-# .env 파일 생성
-cp .env.example .env
+## 🚀 로컬 배포
 
-# 환경 변수 수정 (운영 환경에 맞게)
-nano .env
-```
-
-### 3. 이미지 빌드 및 저장
-```bash
-# 빌드 스크립트 실행 권한 부여
-chmod +x build-for-offline.sh
-
-# 이미지 빌드 및 저장 (항상 AMD64로 빌드됨)
-./build-for-offline.sh
-
-# ARM64가 필요한 특별한 경우에만:
-DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh
-```
-
-**빌드 스크립트는 다음 작업을 수행합니다:**
-- Docker 이미지 빌드 (기본 AMD64 플랫폼)
-- 필요한 기본 이미지 다운로드
-- 이미지들을 tar 파일로 저장
-- 압축하여 전송 준비
-
-**중요**: 폐쇄망 호환성을 위해 기본적으로 AMD64 플랫폼으로 빌드됩니다.
-
-### 4. 전송 파일 확인
-빌드 완료 후 다음 파일들이 생성됩니다:
-```
-offline-images/
-  └── chatbot-ui-1.0.0.tar.gz  # 압축된 Docker 이미지
-docker-compose.offline.yml     # 폐쇄망용 Docker Compose
-deploy-offline.sh              # 폐쇄망 배포 스크립트
-.env.example                   # 환경 변수 예시
-```
-
-## 🚀 폐쇄망 환경 배포
-
-### 1. 파일 전송
-다음 파일들을 폐쇄망 서버로 전송합니다:
-- `offline-images/chatbot-ui-1.0.0.tar.gz`
-- `docker-compose.offline.yml`
-- `deploy-offline.sh`
-- `.env.example`
-
-### 2. 배포 스크립트 실행
-```bash
-# 파일 전송 확인
-ls -la offline-images/
-
-# 배포 스크립트 실행 권한 부여
-chmod +x deploy-offline.sh
-
-# 배포 실행
-./deploy-offline.sh
-```
-
-**배포 스크립트는 다음 작업을 수행합니다:**
-- Docker 이미지 로드
-- 환경 변수 설정 확인
-- 컨테이너 실행
-- 헬스 체크
-- 상태 확인
-
-### 3. 수동 배포 (옵션)
-스크립트를 사용하지 않고 수동으로 배포할 수도 있습니다:
+### 개발 모드 실행
 
 ```bash
-# 1. 이미지 압축 해제
-gunzip offline-images/chatbot-ui-1.0.0.tar.gz
+# 개발 서버 시작
+npm run dev
 
-# 2. 이미지 로드
-docker load -i offline-images/chatbot-ui-1.0.0.tar
-
-# 3. 환경 변수 설정
-cp .env.example .env
-nano .env
-
-# 4. 컨테이너 실행
-docker compose -f docker-compose.offline.yml up -d
+# 브라우저에서 접속
+# http://localhost:3003
 ```
 
-## ⚙️ 환경 설정
+### 프로덕션 빌드 테스트
 
-### 필수 환경 변수
-
-| 변수명 | 설명 | 기본값 | 예시 |
-|--------|------|--------|------|
-| `NODE_ENV` | 실행 환경 | production | production |
-| `NEXT_PUBLIC_API_BASE_URL` | API 서버 URL | http://172.20.23.104:3000 | http://172.20.23.104:3000 |
-| `NEXT_PUBLIC_API_ENDPOINT` | API 엔드포인트 | /api/v1/chat/completions | /api/v1/chat/completions |
-| `NEXT_PUBLIC_MODEL_NAME` | AI 모델명 | gemma3:1b | gemma3:1b |
-
-### 선택적 환경 변수
-
-| 변수명 | 설명 | 기본값 |
-|--------|------|--------|
-| `NEXT_PUBLIC_TYPING_SPEED` | 타이핑 속도 (ms) | 50 |
-| `NEXT_PUBLIC_LOG_LEVEL` | 로그 레벨 | ERROR |
-
-### .env 파일 예시
-```env
-NODE_ENV=production
-NEXT_PUBLIC_API_BASE_URL=http://172.20.23.104:3000
-NEXT_PUBLIC_API_ENDPOINT=/api/v1/chat/completions
-NEXT_PUBLIC_MODEL_NAME=gemma3:1b
-NEXT_PUBLIC_TYPING_SPEED=50
-NEXT_PUBLIC_LOG_LEVEL=ERROR
-```
-
-## 📊 모니터링 및 관리
-
-### 서비스 상태 확인
 ```bash
-# Health Check
-curl http://localhost:3003/api/health
+# 프로덕션 빌드
+npm run build
 
-# 웹 브라우저에서 확인
-http://localhost:3003
+# 빌드 결과 미리보기
+npm run preview
 
-# 컨테이너 상태 확인
-docker compose -f docker-compose.offline.yml ps
+# 브라우저에서 접속
+# http://localhost:4173
 ```
 
-### 로그 모니터링
-```bash
-# 실시간 로그 확인
-docker compose -f docker-compose.offline.yml logs -f
+## 🐳 Docker 배포
 
-# 특정 시간 로그 확인
-docker compose -f docker-compose.offline.yml logs --since="2024-01-01T00:00:00Z"
+### 1. 단일 컨테이너 배포
+
+```bash
+# Docker 이미지 빌드
+docker build -t chatbot-ui .
+
+# 컨테이너 실행
+docker run -d \
+  --name chatbot-ui \
+  -p 3003:3003 \
+  --restart unless-stopped \
+  chatbot-ui
+
+# 상태 확인
+docker ps
+docker logs chatbot-ui
 ```
 
-### 리소스 모니터링
+### 2. Docker Compose 배포 (권장)
+
 ```bash
-# 컨테이너 리소스 사용량
+# 백그라운드에서 실행
+docker compose up -d
+
+# 로그 확인
+docker compose logs -f
+
+# 상태 확인
+docker compose ps
+
+# 중지
+docker compose down
+```
+
+### 3. Docker Compose 파일 구성
+
+```yaml
+# docker-compose.yml
+services:
+  chatbot-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3003"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+```
+
+## 🏢 운영 환경 배포
+
+### 1. 운영 환경 준비
+
+**시스템 요구사항:**
+- **CPU**: 최소 1 core (권장 2 cores)
+- **메모리**: 최소 512MB (권장 1GB)
+- **디스크**: 최소 1GB (로그 저장 공간 포함)
+- **네트워크**: 챗봇 API 서버와 통신 가능
+
+**소프트웨어 요구사항:**
+```bash
+# Docker 설치 확인
+docker --version
+docker compose version
+
+# 필요 시 설치 (Ubuntu/Debian 예시)
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+```
+
+### 2. 운영 환경 변수 설정
+
+```bash
+# 운영용 .env 파일 생성
+cat > .env << 'EOF'
+# API 설정 (운영 서버 주소로 변경)
+VITE_API_BASE_URL=http://your-production-api-server:3000
+VITE_API_ENDPOINT=/api/v1/chat/completions
+VITE_MODEL_NAME=your-production-model
+
+# UI 설정
+VITE_TYPING_SPEED=30
+VITE_LOG_LEVEL=WARN
+EOF
+```
+
+### 3. 서비스 등록 (systemd)
+
+```bash
+# 서비스 파일 생성
+sudo tee /etc/systemd/system/chatbot-ui.service > /dev/null << 'EOF'
+[Unit]
+Description=ChatBot UI Service
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+WorkingDirectory=/opt/chatbot-ui
+ExecStart=/usr/bin/docker compose up -d
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+# 서비스 활성화
+sudo systemctl daemon-reload
+sudo systemctl enable chatbot-ui.service
+sudo systemctl start chatbot-ui.service
+
+# 상태 확인
+sudo systemctl status chatbot-ui.service
+```
+
+### 4. 도메인 연결 (선택사항)
+
+애플리케이션에 도메인을 연결하려면 DNS 설정을 통해 도메인을 서버 IP로 연결하세요:
+
+```bash
+# 도메인 연결 확인
+nslookup your-domain.com
+
+# 애플리케이션 접근
+curl http://your-domain.com:3003
+```
+
+**참고**: 프로덕션 환경에서는 HTTPS 설정을 위해 SSL 인증서를 적용하는 것이 좋습니다.
+
+## 📊 모니터링 및 로그
+
+### 1. 애플리케이션 로그
+
+```bash
+# Docker Compose 로그 실시간 확인
+docker compose logs -f
+
+# 특정 시간대 로그 확인
+docker compose logs --since="2h"
+
+# 에러 로그만 필터링
+docker compose logs 2>&1 | grep -i error
+```
+
+### 2. 파일 로그 시스템
+
+ChatBot UI는 고급 파일 로깅 시스템을 포함합니다:
+
+```bash
+# 로그 디렉토리 구조
+logs/
+├── chatbot-2025-01-10.log    # 오늘 로그
+├── chatbot-2025-01-09.log    # 어제 로그
+└── ...
+
+# 로그 확인 명령어
+tail -f logs/chatbot-$(date +%Y-%m-%d).log  # 실시간 로그
+grep -i error logs/chatbot-*.log             # 에러 로그 검색
+grep -i api logs/chatbot-*.log               # API 호출 로그
+```
+
+### 3. 시스템 모니터링
+
+```bash
+# Docker 컨테이너 리소스 사용량
 docker stats
 
-# 디스크 사용량
+# 시스템 리소스 확인
+htop
 df -h
-
-# 메모리 사용량
 free -h
+
+# 네트워크 연결 상태
+netstat -tulpn | grep :3003
 ```
 
-### 서비스 관리
+### 4. Health Check
+
 ```bash
-# 서비스 중지
-docker compose -f docker-compose.offline.yml down
+# 애플리케이션 상태 확인
+curl -I http://localhost:3003
 
-# 서비스 재시작
-docker compose -f docker-compose.offline.yml restart
+# Docker 컨테이너 상태 확인
+docker compose ps
 
-# 서비스 시작
-docker compose -f docker-compose.offline.yml up -d
+# Health check 로그 확인
+docker inspect --format='{{json .State.Health}}' chatbot_ui-chatbot-ui-1
 ```
 
-## 🔧 문제해결
+### 5. 로그 로테이션 설정
 
-### 일반적인 문제
-
-**1. 이미지 로드 실패**
 ```bash
-# 이미지 파일 확인
-ls -la offline-images/
-file offline-images/chatbot-ui-1.0.0.tar.gz
-
-# 압축 해제 후 로드
-gunzip offline-images/chatbot-ui-1.0.0.tar.gz
-docker load -i offline-images/chatbot-ui-1.0.0.tar
+# logrotate 설정 파일 생성
+sudo tee /etc/logrotate.d/chatbot-ui > /dev/null << 'EOF'
+/opt/chatbot-ui/logs/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 644 root root
+}
+EOF
 ```
 
-**2. 컨테이너 실행 실패**
+## 🔧 성능 최적화
+
+### 1. Docker 이미지 최적화
+
+```dockerfile
+# 단일 스테이지 빌드로 이미지 크기 최소화
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+RUN npm run build
+EXPOSE 3003
+CMD ["npm", "run", "preview"]
+```
+
+### 2. 빌드 최적화
+
+```bash
+# 프로덕션 빌드 시 최적화 옵션
+NODE_ENV=production npm run build
+
+# 번들 분석
+npm install --save-dev rollup-plugin-analyzer
+```
+
+## 🚨 문제 해결
+
+### 1. 일반적인 문제들
+
+**문제: 애플리케이션이 시작되지 않음**
 ```bash
 # 로그 확인
-docker compose -f docker-compose.offline.yml logs
+docker compose logs
 
 # 포트 충돌 확인
-netstat -tlnp | grep :3003
+sudo netstat -tulpn | grep :3003
+
+# 컨테이너 재시작
+docker compose restart
 ```
 
-**3. API 연결 실패**
+**문제: API 연결 오류**
 ```bash
-# 환경 변수 확인
-docker compose -f docker-compose.offline.yml exec chatbot-ui env | grep NEXT_PUBLIC
+# 네트워크 연결 테스트
+curl -I http://172.20.23.104:3000/api/v1/chat/completions
 
-# 네트워크 연결 확인
-docker compose -f docker-compose.offline.yml exec chatbot-ui ping 172.20.23.104
+# DNS 확인
+nslookup 172.20.23.104
+
+# 방화벽 확인
+sudo ufw status
 ```
 
-**4. 플랫폼 호환성 에러**
+**문제: 정적 파일 로딩 실패**
 ```bash
-# 에러 메시지 예시:
-# "The requested image's platform (linux/arm64) does not match the detected host platform (linux/amd64)"
+# Vite 빌드 확인
+npm run build
 
-# 해결 방법: 올바른 플랫폼으로 다시 빌드
-DOCKER_PLATFORM=linux/amd64 ./build-for-offline.sh  # AMD64 환경
-DOCKER_PLATFORM=linux/arm64 ./build-for-offline.sh  # ARM64 환경
+# 빌드 파일 확인
+ls -la dist/
 
-# 현재 시스템 아키텍처 확인
-uname -m
-# x86_64 = AMD64
-# aarch64 = ARM64
+# 브라우저 캐시 클리어
+# Ctrl + Shift + R (하드 리프레시)
 ```
 
-### 디버깅 명령어
+### 2. 성능 문제
+
+**문제: 느린 응답 시간**
 ```bash
-# 컨테이너 내부 접속
-docker compose -f docker-compose.offline.yml exec chatbot-ui sh
+# 리소스 사용량 확인
+docker stats
 
-# 이미지 확인
-docker images | grep chatbot-ui
+# 로그에서 API 응답 시간 확인
+grep -i "duration" logs/chatbot-$(date +%Y-%m-%d).log
 
-# 컨테이너 상세 정보
-docker inspect chatbot-ui-chatbot-ui-1
+# 네트워크 지연 테스트
+ping 172.20.23.104
 ```
+
+**문제: 메모리 부족**
+```bash
+# 메모리 사용량 확인
+free -h
+
+# Docker 메모리 제한 설정
+docker run --memory="512m" chatbot-ui
+```
+
+### 3. 보안 문제
+
+**HTTPS 설정**
+```bash
+# 로드 밸런서나 리버스 프록시에서 HTTPS 설정
+# 또는 Docker 컨테이너 앞에 SSL 터미네이션 설정
+
+# 환경 변수로 보안 설정
+export NODE_ENV=production
+export VITE_LOG_LEVEL=WARN
+```
+
+**보안 모범 사례**
+```bash
+# 환경 변수 보안
+chmod 600 .env
+
+# 컨테이너 보안 스캔
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+  -v $(pwd):/root/.cache/ aquasec/trivy:latest image chatbot-ui
+```
+
+## 📋 배포 체크리스트
+
+### 배포 전 확인사항
+
+- [ ] 환경 변수 설정 완료
+- [ ] API 서버 연결 테스트 완료
+- [ ] 로컬 빌드 테스트 성공
+- [ ] Docker 이미지 빌드 성공
+- [ ] Health check 정상 동작
+
+### 배포 후 확인사항
+
+- [ ] 애플리케이션 정상 로딩
+- [ ] 챗봇 대화 기능 정상 동작
+- [ ] 로그 파일 생성 확인
+- [ ] 모니터링 대시보드 설정
+- [ ] 백업 및 복구 절차 문서화
 
 ## 🔄 업데이트 절차
 
-### 1. 새 버전 빌드 (인터넷망)
-```bash
-# 소스코드 업데이트
-git pull
+### 1. 롤링 업데이트
 
+```bash
 # 새 이미지 빌드
-./build-for-offline.sh
+docker compose build
+
+# 무중단 배포
+docker compose up -d
+
+# 이전 이미지 정리
+docker image prune -f
 ```
 
-### 2. 폐쇄망 업데이트
+### 2. 블루-그린 배포
+
 ```bash
-# 기존 서비스 중지
-docker compose -f docker-compose.offline.yml down
+# 새 버전 배포 (포트 3004)
+docker run -d --name chatbot-ui-green -p 3004:3003 chatbot-ui:new
 
-# 새 이미지 파일 전송 및 로드
-# (위의 배포 절차와 동일)
+# 테스트 후 트래픽 전환
+# 로드 밸런서 설정 변경 또는 DNS 전환
 
-# 서비스 재시작
-./deploy-offline.sh
+# 이전 버전 제거
+docker stop chatbot-ui-blue
+docker rm chatbot-ui-blue
 ```
-
-## 📞 지원 및 문의
-
-문제 발생 시 다음 정보를 포함하여 문의해 주세요:
-- 운영체제 정보
-- Docker 버전
-- 에러 로그
-- 환경 변수 설정
 
 ---
 
-**주의사항:**
-- 폐쇄망 환경에서는 인터넷 연결이 불가능하므로 모든 의존성이 이미지에 포함되어 있어야 합니다.
-- 보안상 중요한 환경 변수는 `.env` 파일에 설정하고 적절한 권한을 설정하세요.
-- 정기적인 백업과 모니터링을 통해 안정적인 운영을 유지하세요. 
+이 가이드는 ChatBot UI의 안정적인 배포와 운영을 위한 포괄적인 지침을 제공합니다. 추가 질문이나 문제가 있으면 로그를 확인하고 문제 해결 섹션을 참조하세요. 

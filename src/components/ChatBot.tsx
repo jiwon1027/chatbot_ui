@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Highlight, themes } from 'prism-react-renderer';
 import TextareaAutosize from 'react-textarea-autosize';
 import { logger, apiLogger, uiLogger, errorLogger } from '../utils/logger';
+import customApiLogger from '../utils/fileLogger';
 
 interface Message {
   id: string;
@@ -234,14 +235,17 @@ const ChatBot = () => {
     scrollToBottom();
   }, [messages]);
 
-  const sendMessage = async () => {
-    logger.time('메시지 전송 처리');
-    logger.info('메시지 전송 시도', { input: input.trim() });
+    const sendMessage = async () => {
+    let startTime = 0;
+    let fullApiUrl = '';
     
-    if (!input.trim()) {
-      logger.warn('빈 메시지는 전송할 수 없습니다');
-      return;
-    }
+          logger.time('메시지 전송 처리');
+      logger.info('메시지 전송 시도', { input: input.trim() });
+      
+      if (!input.trim()) {
+        logger.warn('빈 메시지는 전송할 수 없습니다');
+        return;
+      }
 
     // 진행 중인 타이핑 효과 정리
     if (typingIntervalRef.current) {
@@ -270,10 +274,10 @@ const ChatBot = () => {
     uiLogger.debug('타이핑 상태 시작');
 
     try {
-          const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://172.20.23.104:3000';
-    const apiEndpoint = import.meta.env.VITE_API_ENDPOINT || '/api/v1/chat/completions';
-    const modelName = import.meta.env.VITE_MODEL_NAME || 'gemma3:1b';
-      const fullApiUrl = `${apiBaseUrl}${apiEndpoint}`;
+                const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://172.20.23.104:3000';
+      const apiEndpoint = import.meta.env.VITE_API_ENDPOINT || '/api/v1/chat/completions';
+      const modelName = import.meta.env.VITE_MODEL_NAME || 'gemma3:1b';
+      fullApiUrl = `${apiBaseUrl}${apiEndpoint}`;
 
       const requestPayload = {
         model: modelName,
@@ -298,6 +302,8 @@ const ChatBot = () => {
       });
 
       apiLogger.time('API 응답 시간');
+      startTime = performance.now();
+      
       const response = await fetch(fullApiUrl, {
         method: 'POST',
         headers: {
@@ -305,6 +311,9 @@ const ChatBot = () => {
         },
         body: JSON.stringify(requestPayload),
       });
+      
+      const endTime = performance.now();
+      const duration = Math.round(endTime - startTime);
       apiLogger.timeEnd('API 응답 시간');
 
       apiLogger.info('API 응답 수신', {
@@ -326,6 +335,13 @@ const ChatBot = () => {
         contentLength: data.message?.content?.length,
         responseData: data
       });
+      
+      // API 성공 로그 기록
+      customApiLogger.logApiCall(fullApiUrl, 'POST', duration, {
+        model: data.model,
+        responseLength: data.message?.content?.length || data.choices?.[0]?.message?.content?.length || 0
+      });
+      
       apiLogger.groupEnd();
 
       // OpenAI 호환 형식과 Ollama 형식 모두 지원
@@ -371,12 +387,17 @@ const ChatBot = () => {
               }, parseInt(import.meta.env.VITE_TYPING_SPEED || '50')); // 타이핑 속도 설정 가능
 
     } catch (error) {
+      const errorDuration = performance.now() - startTime;
+      
       errorLogger.error('API 요청 실패', {
         error: error instanceof Error ? error.message : error,
         stack: error instanceof Error ? error.stack : undefined,
         input: originalInput,
         timestamp: new Date().toISOString()
       });
+      
+      // API 에러 로그 기록
+      customApiLogger.logApiError(fullApiUrl, 'POST', error, Math.round(errorDuration));
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
